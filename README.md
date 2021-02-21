@@ -18,7 +18,7 @@ python3 setup.py install
 ```
 
 ## Usage
-Once installed, a command `edxdl` becomes available in your terminal. Typing `edxdl` and hitting in your terminal should bring up the downloader menu. Provide a course URL and hit enter to get started.
+Once installed, a command `edxdl` becomes available in your terminal. Typing `edxdl` and hitting enter in your terminal should bring up the downloader menu. Provide a course URL and hit enter to get started.
 
 
 ## Recommendation
