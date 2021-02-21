@@ -1,7 +1,7 @@
 # EDX Downloader (for edx.org)
 This is a command-line downloader written using Python. This project is inspired by [edx-dl](https://github.com/coursera-dl/edx-dl) but it does not rely on `youtube-dl` or any other external library to download the videos. Moreover, at the moment this downloader supports just [https://edx.org](https://edx.org) website only and it doesn't support other similar websites.
 
-Disclaimer: You should not use this software to abuse EDX website. I have written this software with a positive intention, that is to help learners download EDX course videos altogether quickly and easily. I am not responsible if your EDX account gets banned for abuse. You should use this software on your own risks.
+**Disclaimer**: You should not use this software to abuse EDX website. I have written this software with a positive intention, that is to help learners download EDX course videos altogether quickly and easily. I am not responsible if your EDX account gets banned for abuse. You should use this software on your own risks.
 
 ## Installation
 ```bash
