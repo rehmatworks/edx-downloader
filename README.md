@@ -3,7 +3,7 @@ This is a command-line downloader written using Python. This project is inspired
 
 ### Installation
 ```bash
-pip install edxdownloader
+pip3 install edxdownloader
 ```
 
 Or clone this repo and install manually:
@@ -11,8 +11,8 @@ Or clone this repo and install manually:
 ```bash
 git clone https://github.com/rehmatworks/edx-downloader.git
 cd edx-downloader
-pip install -r requirements.txt
-python setup.py install
+pip3 install -r requirements.txt
+python3 setup.py install
 ```
 
 ### Usage
@@ -20,4 +20,9 @@ Once installed, a command `edxdl` becomes available in your terminal. Typing `ed
 
 
 ### Recommendation
-Although this downloader should work on Python 2.7 too, but it is highly recommended that you should use Python 3.x.
+Although this downloader should work on Python 2.7 too, but it is highly recommended that you should use Python 3.x. to avoid any possible issues.
+
+### Bugs & Issues
+I have developed this package quickly and I have uploaded it for the community. Bug fixing and improvements are highly appreciated. Send a pull request if you want to improve it or if you have fixed a bug.
+
+Normal users can use the issues section to report bugs and issues for this software. Before opening a new issue, please go through existing ones to be sure that your question has not been asked and answered yet.
