@@ -7,7 +7,7 @@ with open(path.join(curr_directory, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(name='edx-downloader',
-	version='1.0.1',
+	version='1.0.2',
 	description='CLI downloader for EDX video courses. Download all course videos from https://edx.org easily.',
 	author='Rehmat Alam',
 	author_email='contact@rehmat.works',

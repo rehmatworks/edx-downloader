@@ -4,6 +4,7 @@ from os.path import expanduser
 import os
 import sys
 from getpass import getpass
+from slugify import slugify
 
 
 def main():
@@ -79,9 +80,10 @@ def main():
                 vid_title = vid.get('title')
                 course_name = vid.get('course')
                 if course_url and vid_title:
-                    save_as = os.path.join(os.getcwd(), course_name, '{}.mp4'.format(vid_title))
-                    if not os.path.exists(course_name):
-                        os.makedirs(course_name)
+                    save_main_dir = os.getcwd(), slugify(course_name)
+                    save_as = os.path.join(save_main_dir, '{}.mp4'.format(vid_title))
+                    if not os.path.exists(save_main_dir):
+                        os.makedirs(save_main_dir)
                     
                     if os.path.exists(save_as):
                         edx.log_message('Already downloaded. Skipping {}'.format(save_as))
