@@ -38,6 +38,7 @@ setup(name='edx-downloader',
         'soupsieve>=2.2',
         'tqdm>=4.57.0',
         'urllib3>=1.26',
-        'validators>=0.18'
+        'validators>=0.18',
+        'python-slugify>=4.0'
 	]
 )
