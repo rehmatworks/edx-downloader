@@ -1,13 +1,20 @@
 from setuptools import setup
+from os import path
 
+
+curr_directory = path.abspath(path.dirname(__file__))
+with open(path.join(curr_directory, 'README.md'), encoding='utf-8') as f:
+    long_description = f.read()
 
 setup(name='edxdownloader',
 	version='1.0.0',
 	description='CLI downloader for EDX video courses. Download all course videos from https://edx.org easily.',
-	author="Rehmat Alam",
-	author_email="contact@rehmat.works",
-	url="https://github.com/rehmatworks/edx-downloader",
-	license="MIT",
+	author='Rehmat Alam',
+	author_email='contact@rehmat.works',
+	url='https://github.com/rehmatworks/edx-downloader',
+    long_description=long_description,
+    long_description_content_type='text/markdown',
+	license='MIT',
 	entry_points={
 		'console_scripts': [
 			'edxdl = edxdownloader.utils:main'

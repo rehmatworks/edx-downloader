@@ -1,4 +1,4 @@
-from edxdownloader.lib import EdxDownloader, EdxLoginError
+from edxdownloader.lib import EdxDownloader, EdxLoginError, EdxInvalidCourseError, EdxNotEnrolledError
 import validators
 from os.path import expanduser
 import os
@@ -19,10 +19,10 @@ def main():
             course_url = None
 
         auth_file = os.path.join(expanduser('~'), '.edxauth')
+        confirm_auth_use = ''
         if os.path.exists(auth_file):
-            confirm_auth_use = ''
             while confirm_auth_use not in ['y', 'n']:
-                confirm_auth_use = str(input('Do you want to use configured EDX account? [y/n] ')).strip().lower()
+                confirm_auth_use = str(input('Do you want to use configured EDX account? [y/n]: ')).strip().lower()
             
             if confirm_auth_use == 'y':
                 with open(auth_file) as f:
@@ -32,7 +32,6 @@ def main():
                         password = str(content[1]).strip()
                     else:
                         print('Auth configuration file is invalid.')
-
 
         while email is None:
             email = str(input('EDX Email: ')).strip()
@@ -44,11 +43,26 @@ def main():
 
         while password is None:
             password = str(getpass())
+        
+        dont_ask_again = os.path.join(expanduser('~'), '.edxdontask')
+        if confirm_auth_use != 'y' and not os.path.exists(dont_ask_again):
+            save_ask_answer = ''
+            while save_ask_answer not in ['y', 'n', 'never']:
+                save_ask_answer = str(input('Do you want to save this login info? Choose n if it is a shared computer. [y/n/never]: ')).strip().lower()
+        
+            if save_ask_answer == 'y':
+                with open(auth_file, 'w') as f:
+                    f.write(email + '\n')
+                    f.write(password + '\n')
+            elif save_ask_answer == 'never':
+                with open(dont_ask_again, 'w') as f:
+                    f.write('never-ask-again')
 
         edx = EdxDownloader(email=email, password=password)
 
         if not edx.is_authenticated:
-            edx.log_message(f'Attempting to sign in using {email}', 'orange')
+            passhint = '*' * len(password)
+            edx.log_message('Attempting to sign in using {} and {}'.format(email, passhint), 'orange')
             try:
                 edx.sign_in()
                 edx.log_message('Authentication successful!', 'green')
@@ -56,31 +70,42 @@ def main():
                 edx.log_message('Sign in failed. Please check credentials.', 'red')
                 sys.exit(1)
 
-        edx.log_message(f'Crawling course content. This may take several minutes.')
+        edx.log_message('Crawling course content. This may take several minutes.')
         videos = edx.get_course_data(course_url)
 
         if type(videos) is list and len(videos) > 0:
-            edx.log_message(f'Found {len(videos)} videos. Downloading videos now.')
+            edx.log_message('Crawling complete! Found {} videos. Downloading videos now.'.format(len(videos)), 'green')
             for vid in videos:
                 vid_title = vid.get('title')
                 course_name = vid.get('course')
                 if course_url and vid_title:
-                    save_as = os.path.join(course_name, f'{vid_title}.mp4')
+                    save_as = os.path.join(os.getcwd(), course_name, '{}.mp4'.format(vid_title))
                     if not os.path.exists(course_name):
                         os.makedirs(course_name)
                     
                     if os.path.exists(save_as):
-                        edx.log_message(f'Already downloaded. Skipping {save_as}')
+                        edx.log_message('Already downloaded. Skipping {}'.format(save_as))
                     else:
-                        edx.log_message(f'Downloading video {vid_title}')
+                        edx.log_message('Downloading video {}'.format(vid_title))
                         edx.download_video(vid.get('url'), save_as)
-                        edx.log_message(f'Downloaded and stored at ./{save_as}', 'green')
+                        edx.log_message('Downloaded and stored at {}'.format(save_as), 'green')
+            edx.log_message('All done! Videos have been downloaded.')
+            sys.exit(0)
         else:
             edx.log_message('No downloadable videos found for the course!', 'red')
+            sys.exit(1)
+    except EdxInvalidCourseError as e:
+        edx.log_message('Looks like you have provided an invalid course URL.', 'red')
+        sys.exit(1)
+    except EdxNotEnrolledError as e:
+        edx.log_message('Looks like you are not enrolled in this course or you are not authorized.')
+        sys.exit(1)
     except KeyboardInterrupt:
         print('')
         print('Download cancelled by user.')
+        sys.exit(1)
     except Exception as e:
-        with open('edx-error.log', 'a') as f:
+        with open(os.path.join(os.getcwd(), 'edx-error.log'), 'a') as f:
             f.write((str(e)))
         print('Something unexpected occured. Please provide details present in edx-error.log file while opening an issue at GitHub.')
+        sys.exit(1)

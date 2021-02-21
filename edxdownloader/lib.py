@@ -8,14 +8,14 @@ from tqdm import tqdm
 
 # Base URLs as pseudo constants
 EDX_HOSTNAME = 'courses.edx.org'
-BASE_URL = f'https://{EDX_HOSTNAME}'
+BASE_URL = 'https://{}'.format(EDX_HOSTNAME)
 LMS_BASE_URL = 'https://learning.edx.org'
-BASE_API_URL = f'{BASE_URL}/api'
-LOGIN_URL = f'{BASE_URL}/login'
-COURSE_BASE_URL = f'{BASE_URL}/courses'
-COURSE_OUTLINE_BASE_URL = f'{BASE_API_URL}/course_home/v1/outline'
-XBLOCK_BASE_URL = f'{BASE_URL}/xblock'
-LOGIN_API_URL = f'{BASE_API_URL}/user/v1/account/login_session/'
+BASE_API_URL = '{}/api'.format(BASE_URL)
+LOGIN_URL = '{}/login'.format(BASE_URL)
+COURSE_BASE_URL = '{}/courses'.format(BASE_URL)
+COURSE_OUTLINE_BASE_URL = '{}/course_home/v1/outline'.format(BASE_API_URL)
+XBLOCK_BASE_URL = '{}/xblock'.format(BASE_URL)
+LOGIN_API_URL = '{}/user/v1/account/login_session/'.format(BASE_API_URL)
 
 # Chunk size to download videos in chunks
 VID_CHUNK_SIZE = 1024
@@ -157,7 +157,7 @@ class EdxDownloader:
             raise EdxInvalidCourseError('The provided course URL seems to be invalid.')
         
         # Construct the course outline URL
-        COURSE_OUTLINE_URL = f'{COURSE_OUTLINE_BASE_URL}/{COURSE_SLUG}'
+        COURSE_OUTLINE_URL = '{}/{}'.format(COURSE_OUTLINE_BASE_URL, COURSE_SLUG)
 
         # Check either authenticated or not before proceeding.
         # If not, raise the EdxNotAuthenticatedError exception.
@@ -188,10 +188,10 @@ class EdxDownloader:
                 
                 if course_name is not None:
                     block_id = v.get('id')
-                    block_url = f'{COURSE_BASE_URL}/{COURSE_SLUG}/jump_to/{block_id}'
+                    block_url = '{}/{}/jump_to/{}'.format(COURSE_BASE_URL, COURSE_SLUG, block_id)
                     block_res = self.requests_session.get(block_url)
                     main_block_id = block_res.url.split('/')[-1]
-                    main_block_url = f'{XBLOCK_BASE_URL}/{main_block_id}'
+                    main_block_url = '{}/{}'.format(XBLOCK_BASE_URL, main_block_id)
                     main_block_res = self.requests_session.get(main_block_url)
 
                     soup = BeautifulSoup(html.unescape(main_block_res.text), 'lxml')
@@ -216,7 +216,7 @@ class EdxDownloader:
                                     vid_title = v.get('display_name')
                                     vid_heading_el = vid.find('h3', {'class': 'hd hd-2'})
                                     if vid_heading_el:
-                                        vid_title = f'{vid_title} - {vid_heading_el.text.strip()}'
+                                        vid_title = '{} - {}'.format(vid_title, vid_heading_el.text.strip())
 
                                     # Append the video object to all_videos list
                                     all_videos.append({
