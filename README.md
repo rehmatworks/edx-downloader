@@ -23,7 +23,7 @@ Once installed, a command `edxdl` becomes available in your terminal. Typing `ed
 Although this downloader should work on Python 2.7 too, but it is highly recommended that you should use Python 3.x. to avoid any possible issues.
 
 ## Bugs & Issues
-I have developed this package quickly and I have uploaded it for the community. Bug fixing and improvements are highly appreciated. Send a pull request if you want to improve it or if you have fixed a bug.
+I have developed this package quickly and I have uploaded it for the community. Please expect bugs and issues. Bug fixing and improvements are highly appreciated. Send a pull request if you want to improve it or if you have fixed a bug.
 
 Normal users can use the issues section to report bugs and issues for this software. Before opening a new issue, please go through existing ones to be sure that your question has not been asked and answered yet.
 
