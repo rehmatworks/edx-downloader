@@ -1,0 +1,14 @@
+__pycache__/
+.ropeproject/
+*.swp
+*.mp4
+*.docx
+*.pdf
+build/
+dist/
+edxdownloader.egg-info/
+*.egg-info/
+.idea/
+.venv/
+*.json
+edx-error.log
