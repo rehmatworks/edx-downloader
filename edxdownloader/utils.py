@@ -80,7 +80,7 @@ def main():
                 vid_title = vid.get('title')
                 course_name = vid.get('course')
                 if course_url and vid_title:
-                    save_main_dir = os.getcwd(), slugify(course_name)
+                    save_main_dir = os.path.join(os.getcwd(), slugify(course_name))
                     save_as = os.path.join(save_main_dir, '{}.mp4'.format(vid_title))
                     if not os.path.exists(save_main_dir):
                         os.makedirs(save_main_dir)
