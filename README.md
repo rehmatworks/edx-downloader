@@ -23,7 +23,7 @@ Once installed, a command `edxdl` becomes available in your terminal. Typing `ed
 ## Storing Login Credentials
 On a private computer, it is always better if the software doesn't ask you for your EDX login and again. To make the software automatically use your login credentials, create a file called `.edxauth` in your home directory and provide the credentials in two lines. The first line should contain your email address and the second line should contain your password.
 
-Moreover, `edx-downloader` will ask you to save your login details if you have not asked it to skip saving the credentials. If it doesn't ask, you can update your credentials in `.edxauth` file any time. On a Unix machine, you can create this file with `touch ~/.edxauth` and edit with you favorite editor. A sample `.edxauth` file has been included in this repo.
+Moreover, `edx-downloader` will ask you to save your login details if you have not asked it to skip saving the credentials. If it doesn't ask, you can update your credentials in `.edxauth` file any time. On a Unix machine, you can create this file with `touch ~/.edxauth` and edit with your favorite editor. A sample `.edxauth` file has been included in this repo.
 
 
 ## Recommendation
