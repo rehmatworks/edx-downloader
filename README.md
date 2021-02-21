@@ -26,3 +26,14 @@ Although this downloader should work on Python 2.7 too, but it is highly recomme
 I have developed this package quickly and I have uploaded it for the community. Bug fixing and improvements are highly appreciated. Send a pull request if you want to improve it or if you have fixed a bug.
 
 Normal users can use the issues section to report bugs and issues for this software. Before opening a new issue, please go through existing ones to be sure that your question has not been asked and answered yet.
+
+## Credits
+- [Python](https://www.python.org/) - The programming language that I have used
+- [beautifulsoup4](https://pypi.org/project/beautifulsoup4/) - For HTML parsing
+- [colorful](https://github.com/timofurrer/colorful) - To show colorful text
+- [fake-useragent](https://pypi.org/project/fake-useragent/) - For a dynamic user-agent
+- [requests](https://github.com/psf/requests) - To make HTTP requests
+- [tqdm](https://github.com/tqdm/tqdm) - To show download progress bar
+- [validators](https://github.com/kvesteri/validators) - To validate URL and email input
+
+And thanks to several indirect dependencies that the main dependencies are relying on.
