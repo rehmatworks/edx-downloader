@@ -73,7 +73,7 @@ class EdxNotAuthenticatedError(Exception):
 class EdxDownloader:
     # Create a request session to send cookies
     # automatically for HTTP requests.
-    requests_session = requests.session()
+    client = requests.session()
 
     # Generate a fake user-agent to avoid blocks
     user_agent = UserAgent()
@@ -127,13 +127,22 @@ class EdxDownloader:
         # Authenticates the user session. It returns True on success
         # or raises EdxLoginError on failure.
         try:
-            html_res = self.requests_session.get(LOGIN_URL)
-            self.edx_headers['x-csrftoken'] = html_res.cookies.get('csrftoken') 
+            # html_res = self.requests_session.get(LOGIN_URL)
+            # Retrieve the CSRF token first
+            self.client.get(LOGIN_URL)  # sets cookie
+            if 'csrftoken' in self.client.cookies:
+                # Django 1.6 and up
+                csrftoken = self.client.cookies['csrftoken']
+                print(csrftoken)
+            else:
+                # older versions
+                csrftoken = self.client.cookies['csrf']
+            self.edx_headers['x-csrftoken'] = csrftoken
             data = {
                 'email': self.edx_email,
                 'password': self.edx_password
             }
-            res = self.requests_session.post(LOGIN_API_URL, headers=self.edx_headers, data=data)
+            res = self.client.post(LOGIN_API_URL, headers=self.edx_headers, data=data)
             if res.json().get('success') is True:
                 self.is_authenticated = True
                 return True
@@ -165,7 +174,7 @@ class EdxDownloader:
             raise EdxNotAuthenticatedError('Course data cannot be retrieved without getting authenticated.')
         
         # Make an HTTP GET request to outline URL and get tabs
-        outline_resp = self.requests_session.get(COURSE_OUTLINE_URL)
+        outline_resp = self.client.get(COURSE_OUTLINE_URL)
         blocks = outline_resp.json().get('course_blocks')
         collected_vids = []
         collected_courses = []
@@ -189,10 +198,10 @@ class EdxDownloader:
                 if course_name is not None:
                     block_id = v.get('id')
                     block_url = '{}/{}/jump_to/{}'.format(COURSE_BASE_URL, COURSE_SLUG, block_id)
-                    block_res = self.requests_session.get(block_url)
+                    block_res = self.client.get(block_url)
                     main_block_id = block_res.url.split('/')[-1]
                     main_block_url = '{}/{}'.format(XBLOCK_BASE_URL, main_block_id)
-                    main_block_res = self.requests_session.get(main_block_url)
+                    main_block_res = self.client.get(main_block_url)
 
                     soup = BeautifulSoup(html.unescape(main_block_res.text), 'lxml')
 
@@ -229,7 +238,7 @@ class EdxDownloader:
     
     def download_video(self, vid_url, save_as):
         # Download the video
-        with self.requests_session.get(vid_url, stream=True) as resp:
+        with self.client.get(vid_url, stream=True) as resp:
             total_size_in_bytes= int(resp.headers.get('content-length', 0))
             progress_bar = tqdm(total=total_size_in_bytes, unit='iB', unit_scale=True)
             with open(save_as, 'wb') as f:
