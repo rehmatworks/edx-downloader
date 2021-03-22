@@ -73,15 +73,18 @@ def main():
 
         edx.log_message('Crawling course content. This may take several minutes.')
         videos = edx.get_course_data(course_url)
+        count = 0
 
         if type(videos) is list and len(videos) > 0:
             edx.log_message('Crawling complete! Found {} videos. Downloading videos now.'.format(len(videos)), 'green')
             for vid in videos:
                 vid_title = vid.get('title')
                 course_name = vid.get('course')
+                count += 1
                 if course_url and vid_title:
                     save_main_dir = os.path.join(os.getcwd(), slugify(course_name))
-                    save_as = os.path.join(save_main_dir, '{}.mp4'.format(slugify(vid_title)))
+                    countstr = str(count)
+                    save_as = os.path.join(save_main_dir, countstr+'{}.mp4'.format(slugify(vid_title)))
                     if not os.path.exists(save_main_dir):
                         os.makedirs(save_main_dir)
                     
