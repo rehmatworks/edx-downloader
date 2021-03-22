@@ -131,9 +131,7 @@ class EdxDownloader:
             # Retrieve the CSRF token first
             self.client.get(LOGIN_URL)  # sets cookie
             if 'csrftoken' in self.client.cookies:
-                # Django 1.6 and up
                 csrftoken = self.client.cookies['csrftoken']
-                print(csrftoken)
             else:
                 # older versions
                 csrftoken = self.client.cookies['csrf']
