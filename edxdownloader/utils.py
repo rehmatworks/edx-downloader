@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
-import json
 
-from selenium.common.exceptions import WebDriverException
-from edxdownloader.lib import EdxDownloader, EdxLoginError, EdxInvalidCourseError, EdxNotEnrolledError, EdxRequestError
-import validators
-from os.path import expanduser
-import os
-import sys
-from getpass import getpass
 import argparse
-import traceback
-import time
+import os
 import re
+import sys
+import time
+import traceback
+from getpass import getpass
+from os.path import expanduser
+
+import validators
+from edxdownloader.lib import EdxDownloader, EdxLoginError, EdxInvalidCourseError, EdxNotEnrolledError, EdxRequestError, \
+    LogMessage
+from selenium.common.exceptions import WebDriverException
 
 parser = argparse.ArgumentParser(prog=os.path.basename(sys.argv[0]),
                                  description='Just another web scraper for Edx content. Subtitles included. Supports Edx\'s  default player/subs aswell as courses which use Kaltura embedded media player. For the latter, Selenium is required.',
@@ -25,8 +26,9 @@ parser.add_argument('-c', '--colored', action='store_const', const=False,
 parser.add_argument('-dev', '--development', action='store_const', const=True,
                     default=False, help='Toggle experimental scraping to target: Kaltura player.(Default = False)')
 
-parser.add_argument('--dashboard', action='store_const', const=True,
-                    default=False, help='Scan your entire edx dashboard profile for  courses/videos.(Default = False)')
+parser.add_argument('--results', action='store_const', const=True,
+                    default=False,
+                    help='Recommended: Ignores previously found pages and speeds up the parsing proccess .(Default = False)')
 try:
     args = parser.parse_args()
 except argparse.ArgumentError as e:
@@ -34,134 +36,193 @@ except argparse.ArgumentError as e:
 
 
 def main():
+    log_message = LogMessage(is_debug=args.debug, is_colored=args.colored)
+    previous_results = os.path.join(expanduser('~'), '.edxResults')
+    previous_results_bad = os.path.join(expanduser('~'), '.edxResults_bad')
+    auth_file = os.path.join(expanduser('~'), '.edxauth')
+    load_results = args.results
+
     try:
-        course_url = None
         email = None
         password = None
-        while course_url is None:
-            # course_url = str(input('Course URL: ')).strip()
-            # todo start
-            course_url = "https://courses.edx.org/courses/course-v1:NYUx+CYB.PEN.3+1T2021/"
-            # course_url = "https://courses.edx.org/courses/course-v1:MITx+6.00.2x+1T2022/"
-            # todo end
-            if validators.url(course_url):
-                break
-            print('Please provide a valid URL.')
-            course_url = None
 
-        auth_file = os.path.join(expanduser('~'), '.edxauth')
-        confirm_auth_use = ''
-        if os.path.exists(auth_file):
-            while confirm_auth_use not in ['y', 'n']:
-                # TODO
-                # confirm_auth_use = str(input('Do you want to use configured EDX account? [y/n]: ')).strip().lower()
-                confirm_auth_use = "y"
+        if not os.path.exists(auth_file):
+            with open(auth_file, 'w') as f:
+                f.write('\n')
+
+        while True:
+            # TODO IMPORTANT
+            confirm_auth_use =  str(input('Do you want to use configured EDX account? [y/n]: ')).strip().lower()
+            # confirm_auth_use = "y" #todo auto edw diagrafi kai no-comment to apo panw
             if confirm_auth_use == 'y':
                 with open(auth_file) as f:
                     content = f.read().splitlines()
                     if len(content) >= 2 and validators.email(content[0]) is True:
                         email = str(content[0]).strip()
                         password = str(content[1]).strip()
+                        break
                     else:
                         print('Auth configuration file is invalid.')
+                        continue
+            elif confirm_auth_use == 'n':
+                break
+            else:
+                print("Please type 'y' for Yes or 'n' for No")
+                continue
 
         while email is None:
             email = str(input('EDX Email: ')).strip()
-            if validators.email(email) is True:
-                break
-            else:
+            if not validators.email(email):
                 print('Provided email is invalid.')
                 email = None
+                continue
+            else:
+                while password is None:
+                    password = str(getpass())
+                    if len(password) < 8:
+                        print('Provided password is invalid.')
+                        password = None
+                        continue
+            with open(auth_file, 'w') as f:
+                f.write('')
 
-        while password is None:
-            password = str(getpass())
+        with open(auth_file, 'r') as f:
+            for i, j in enumerate(f):
+                if i == 2:
+                    if j.strip() == 'never':
+                        break
+            else:
+                save_auth_answer = ''
+                while save_auth_answer not in ['y', 'n', 'never']:
+                    # if input is 'never, it never asks about save preferences
+                    # for this user.
+                    save_auth_answer = str(input(
+                        "Do you want to save this login info? Type [Y/N]. Type 'never' to save your credentials and never ask again: ")).strip().lower()
 
-        dont_ask_again = os.path.join(expanduser('~'), '.edxdontask')
-        if confirm_auth_use != 'y' and not os.path.exists(dont_ask_again):
-            save_ask_answer = ''
-            while save_ask_answer not in ['y', 'n', 'never']:
-                save_ask_answer = str(input(
-                    'Do you want to save this login info? Choose n if it is a shared computer. [y/n/never]: ')).strip().lower()
+                if save_auth_answer == 'y':
+                    with open(auth_file, 'w') as f:
+                        f.write(email + '\n')
+                        f.write(password + '\n')
+                        f.write(save_auth_answer)
+                if save_auth_answer == 'n':
+                    with open(auth_file, 'w') as f:
+                        f.write('\n')
+                if save_auth_answer == 'never':
+                    with open(auth_file, 'w') as f:
+                        f.write(email + '\n')
+                        f.write(password + '\n')
+                        f.write('never')
 
-            if save_ask_answer == 'y':
-                with open(auth_file, 'w') as f:
-                    f.write(email + '\n')
-                    f.write(password + '\n')
-            elif save_ask_answer == 'never':
-                with open(dont_ask_again, 'w') as f:
-                    f.write('never-ask-again')
+        # load search results from previous scrape
+        # previous_results = os.path.join(expanduser('~'), '.edxResults')
+        # previous_results_bad = os.path.join(expanduser('~'), '.edxResults_bad')
+        if not os.path.exists(previous_results):
+            with open(previous_results, 'w') as f:
+                f.write('')
+
+        if not os.path.exists(previous_results_bad):
+            with open(previous_results_bad, 'w') as f:
+                f.write('')
 
         try:
             # create main object
             edx = EdxDownloader(email=email, password=password, is_debug=args.debug, is_colored=args.colored,
-                                toggle_experimental=args.development)
-        except (WebDriverException, KeyboardInterrupt) as e:
+                                toggle_experimental=args.development, )
+        except (WebDriverException, KeyboardInterrupt) :
             print(traceback.format_exc())
             sys.exit(1)
 
-        #
-        #     # Check if .edxcookie exists. if it does, it reads it
-        #     # and uses pickle to load it into requests session cookieJar..
-        #     # and authenticates user.
-        #     # If it does not exist, it creates an empty one.
-        # if os.path.exists(edx.cookie):
-        #     if os.stat(edx.cookie).st_size >= 50:
-        #         with open(edx.cookie, 'rb') as f:
-        #             edx.client.cookies.update(pickle.load(f),)
-        #         edx.is_authenticated = True
-        # else:
-        #     with open(edx.cookie, 'wb') as f:
-        #         pass
+            # Check if .edxcookie exists. if it does, it reads it
+            # and uses pickle to load it into requests session cookieJar..
+            # and authenticates user.
+            # If it does not exist, it creates an empty one.
 
-        if not edx.is_authenticated:
+        while not edx.is_authenticated:
+
             print("Signing in..")
-            for i in reversed(range(6)):
-                print(i)
+            for i in reversed(range(4)):
+                print(i + 1)
                 time.sleep(1)
-            passhint = '*' * len(password)
-            edx.log_message('Attempting to sign in using {} and {}'.format(email, passhint), 'orange')
-            try:
-                edx.sign_in()
+            if edx.load():
+                print("Session loaded")
+                edx.is_authenticated = True
+            else:
+                try:
+                    passhint = '*' * len(password)
+                    log_message('Attempting to sign in using {} and {}'.format(email, passhint), 'orange')
+                    edx.sign_in()
+                except (EdxLoginError, EdxRequestError) as e:
+                    log_message('Sign-in failed. Error: ' + str(e), 'red')
+                    sys.exit(1)
+                else:
+                    edx.dump()
 
-            except (EdxLoginError, EdxRequestError) as e:
-                edx.log_message('Sign-in failed. Error: ' + str(e), 'red')
-                sys.exit(1)
-            edx.log_message('Authentication successful!', 'green')
+        log_message('Authentication successful!', 'green')
 
-        edx.log_message('Crawling course content. This may take several minutes.')
-        results = []
+        if not load_results:
+            log_message('Crawling Dashboard content. Please wait..')
+            courses = edx.dashboard_urls()
+            # Show dashboard items and multiple choice.
+            [print(f"[{i + 1}]  {course.get('course_title')}") for i, course in enumerate(courses)]
 
-        if args.dashboard:
-            dashboard = edx.dashboard_urls()
-            [results.extend(edx.get_course_data(i)) for i in dashboard]
+            number_of_courses = len(courses)
+            choices = set()
+            while True:
+                course_choice = input(
+                    f"\nType [ALL] to select all courses or type it's respective integer between 0 and {number_of_courses} and type[OK] to finalize your choices: ").strip()
+
+                if course_choice.lower() == 'all':
+                    log_message('Scraping courses. Please wait..')
+                    [edx.get_course_data(course.get('COURSE_SLUG')) for course in courses]
+
+                if course_choice == 'ok':
+                    if not choices:
+                        log_message(" Select one or more courses, then type [OK] to finalize your choices.")
+                    else:
+                        [edx.get_course_data(course.get('COURSE_SLUG')) for i, course in enumerate(courses) if
+                         i in choices]
+
+                    break
+
+                if course_choice.isdecimal() and int(course_choice) <= number_of_courses:
+                    c_n = int(course_choice)
+                    if c_n - 1 not in choices:
+                        choices.add(c_n - 1)
+                        log_message(
+                            f"\n{courses[c_n - 1].get('course_title')} added.\nCurrently selected courses: {choices}\n")
+                        continue
+                    else:
+                        log_message("You have already chosen this course.")
+                else:
+                    log_message("Not a valid number. Retry.", "red")
+                    continue
         else:
-            results = edx.get_course_data(course_url)
+            log_message("Loading only previous results.  ")
 
-        len(results)
-        with open(os.path.join(os.getcwd(), 'results_dump'), 'a') as f:
-            f.write(json.dumps(results))
+        results = edx.collector.save_results()
 
-        if type(results) is not None and len(results) > 0:
-            edx.log_message('Crawling complete! Found {} videos. Downloading videos now.'.format(len(results)),
-                            'orange')
+        if type(results) is list and len(results) > 0:
+            # DOWNLOAD QUEUE
+            log_message('Crawling complete! Found {} videos. Downloading videos now.'.format(len(results)),
+                        'green')
             count = 0
-            for vid in results:
+            for downloadable in results:
                 count += 1
                 # Filenaming format {segment}
                 # do not delete :    re.sub(r'[^\w\-_ ]', ' ')
-                course_name = re.sub(r'[^\w_ ]', '-', vid.get('course'))
-                chapter = re.sub(r'[^\w_ ]', '-', vid.get('chapter'))
-                lecture = re.sub(r'[^\w_ ]', '-', vid.get('lecture'))
-                vid_title = re.sub(r'[^\w_ ]', '-', vid.get('segment'))
-                video_url = vid.get('url')
-                sub = vid.get('sub')  # check
+                course_name = re.sub(r'[^\w_ ]', '-', downloadable.get('course'))
+                chapter = re.sub(r'[^\w_ ]', '-', downloadable.get('chapter'))
+                lecture = re.sub(r'[^\w_ ]', '-', downloadable.get('lecture'))
+                vid_title = re.sub(r'[^\w_ ]', '-', downloadable.get('segment'))
+                video_url = downloadable.get('video_url')
+                subtitle_url = downloadable.get('subtitle_url', None)  # check
 
                 # course directory
                 main_dir = os.path.join(os.getcwd(), course_name)
                 chapter_dir = os.path.join(main_dir, chapter)
 
                 # base name for both videos and subtitles
-                base_name = f' {vid_title} '
+                base_name = f'{lecture}-{vid_title}'
 
                 # file paths
                 video_save_as = os.path.join(chapter_dir, '{}{}'.format(base_name, '.mp4'))
@@ -179,53 +240,41 @@ def main():
                     pass
                 if os.path.exists(video_save_as):
                     # if video exists
-                    edx.log_message('Already downloaded. Skipping video: {} - {}{}'.format(base_name, lecture, '.mp4'))
+                    log_message('Already downloaded. Skipping video: {} - {}{}'.format(base_name, lecture, '.mp4'))
                 else:
-                    edx.log_message('Downloading video: {}'.format(vid_title))
+                    log_message('Downloading video: {}'.format(vid_title))
                     edx.download_video(video_url, video_save_as)
-                    edx.log_message('Downloaded and stored at {}'.format(main_dir), 'green')
+                    log_message('Downloaded and stored at {}'.format(main_dir), 'green')
 
-                if sub and os.path.exists(sub_save_as):
+                if subtitle_url and os.path.exists(sub_save_as):
                     # if subtitle exists
-                    edx.log_message(
+                    log_message(
                         'Already downloaded. Skipping subtitle : {} - {}{}'.format(base_name, lecture, '.srt'))
                 else:
-                    edx.log_message('Downloading subtitle for: {}'.format(vid_title))
-                    edx.download_video(sub, sub_save_as, srt=True)
-                    edx.log_message('Subtitle Downloaded and stored at {}'.format(main_dir), 'green')
+                    log_message('Downloading subtitle for: {}'.format(vid_title))
+                    edx.download_video(subtitle_url, sub_save_as, srt=True)
+                    log_message('Subtitle Downloaded and stored at {}'.format(main_dir), 'green')
 
-            edx.log_message('All done! Videos have been downloaded.', "orange")
-        else:
-            # TODO
-            experimental_choice = str(
-                input('An experimental search might work on NYU. Try experimental search? [y/n]: ')).strip().lower()
-
-            if experimental_choice == "y":
-                if args.dashboard:
-                    dashboard = edx.dashboard_urls()
-                    [results.extend(edx.get_course_data(i)) for i in dashboard]
-                else:
-                    results.extend(edx.get_course_data(course_url))
-                    print(results)
-        sys.exit(1)
-
-
+            log_message('All done! Videos have been downloaded.', "orange")
 
 
     except EdxInvalidCourseError as e:
-        edx.log_message(e, 'red')
+        log_message(e, 'red')
         sys.exit(1)
     except EdxNotEnrolledError as e:
-        edx.log_message(e)
+        log_message(e)
         sys.exit(1)
     except KeyboardInterrupt:
+        edx.collector.save_results()
         print('\nDownload cancelled by user.')
         sys.exit(1)
 
-    # except Exception as e:
-    #     with open(os.path.join(os.getcwd(), 'edx-error.log'), 'a') as f:
-    #         f.write((str(e)))
-    #     print(f'Something unexpected occured. Please provide details present in { os.path.join(os.getcwd())}/edx-error.log file while opening an issue at GitHub.')
-    #
-    #     sys.exit(1)
-    #
+    except Exception as e:
+        edx.collector.save_results()
+        with open(os.path.join(os.getcwd(), 'edx-error.log'), 'a') as f:
+            f.write((str(e)))
+        print(traceback.format_exc())
+        print(
+            f'Something unexpected occured. Please provide details present in {os.path.join(os.getcwd())}/edx-error.log file and open an issue at GitHub.')
+
+        sys.exit(1)
