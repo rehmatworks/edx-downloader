@@ -38,8 +38,8 @@ BASE_KALTURA_VIDEO_URL = "https://cdnapisec.kaltura.com/p/{PID}/sp/{PID}00/playM
 VID_CHUNK_SIZE = 1024
 
 
-# Is raised when login attempt fails
 class EdxLoginError(Exception):
+
 	def __init__(self, value):
 		self.value = value
 
@@ -55,18 +55,24 @@ class EdxInvalidCourseError(Exception):
 	def __str__(self):
 		return repr(self.value)
 
+    """Raised when login attempt fails"""
 
-# Raised when no blocks found for the course
+class EdxInvalidCourseError(Exception):
+    """Raised when the course cannot be fetched"""
+
 class EdxNotEnrolledError(Exception):
+
 	def __init__(self, value):
 		self.value = value
 
 	def __str__(self):
 		return repr(self.value)
 
+    """Raised when no blocks found for the course"""
 
-# Raised when some HTTP error occurs
+
 class EdxRequestError(Exception):
+
 	def __init__(self, value):
 		self.value = value
 
@@ -129,6 +135,11 @@ class LogMessage:
 
 
 log = LogMessage.log_message
+=======
+    """Raised when some HTTP error occurs"""
+
+class EdxNotAuthenticatedError(Exception):
+    """Raised when an unauthenticated request is made"""
 
 
 class EdxDownloader:
