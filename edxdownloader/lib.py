@@ -18,7 +18,7 @@ XBLOCK_BASE_URL = '{}/xblock'.format(BASE_URL)
 LOGIN_API_URL = '{}/user/v1/account/login_session/'.format(BASE_API_URL)
 
 # Chunk size to download videos in chunks
-VID_CHUNK_SIZE = 1024
+CHUNK_SIZE = 1024
 
 # Override colorful palette
 ci_colors = {
@@ -31,18 +31,43 @@ cf.update_palette(ci_colors)
 
 class EdxLoginError(Exception):
     """Raised when login attempt fails"""
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return repr(self.value)
 
 class EdxInvalidCourseError(Exception):
     """Raised when the course cannot be fetched"""
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return repr(self.value)
 
 class EdxNotEnrolledError(Exception):
     """Raised when no blocks found for the course"""
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return repr(self.value)
 
 class EdxRequestError(Exception):
     """Raised when some HTTP error occurs"""
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return repr(self.value)
 
 class EdxNotAuthenticatedError(Exception):
     """Raised when an unauthenticated request is made"""
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return repr(self.value)
 
 
 class EdxDownloader:
@@ -184,6 +209,7 @@ class EdxDownloader:
                             metadata = vid_url_el.get('data-metadata')
                             if metadata:
                                 vid_url = None
+                                srt_url = None
                                 # Get the data-metadata attribute HTML
                                 # and parse it as a JSON object.
                                 metadata = json.loads(metadata)
@@ -194,6 +220,13 @@ class EdxDownloader:
                                             # Break the loop if a valid video URL
                                             # is found.
                                             break
+                                if 'publishCompletionUrl' in metadata:
+                                    tr_url = metadata['publishCompletionUrl']
+                                    if str(tr_url).endswith('publish_completion'):
+                                        segments = tr_url.rpartition('/')
+                                        srt_url = 'https://courses.edx.org{}/transcript/download'.format(segments[0])
+                                    else:
+                                        print('\x1b[6;30;42m' + 'Warning' + '\x1b[0m')
                                 if vid_url and vid_url not in collected_vids:
                                     vid_title = v.get('display_name')
                                     vid_heading_el = vid.find('h3', {'class': 'hd hd-2'})
@@ -204,18 +237,19 @@ class EdxDownloader:
                                     all_videos.append({
                                         'title': vid_title,
                                         'url': vid_url,
+                                        'srt_url': srt_url,
                                         'course': course_name
                                     })
                                     collected_vids.append(vid_url)                
         return all_videos
     
-    def download_video(self, vid_url, save_as):
+    def download_content(self, content_url, save_as):
         # Download the video
-        with self.client.get(vid_url, stream=True) as resp:
+        with self.client.get(content_url, stream=True) as resp:
             total_size_in_bytes= int(resp.headers.get('content-length', 0))
             progress_bar = tqdm(total=total_size_in_bytes, unit='iB', unit_scale=True)
             with open(save_as, 'wb') as f:
-                for chunk in resp.iter_content(chunk_size=VID_CHUNK_SIZE):
+                for chunk in resp.iter_content(chunk_size=CHUNK_SIZE):
                     progress_bar.update(len(chunk))
                     f.write(chunk)
             progress_bar.close()

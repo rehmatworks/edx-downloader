@@ -76,7 +76,7 @@ def main():
         count = 0
 
         if type(videos) is list and len(videos) > 0:
-            edx.log_message('Crawling complete! Found {} videos. Downloading videos now.'.format(len(videos)), 'green')
+            edx.log_message('Crawling complete! Found {} videos (w/o subtitles). Downloading videos and subtitles now.'.format(len(videos)), 'green')
             for vid in videos:
                 vid_title = vid.get('title')
                 course_name = vid.get('course')
@@ -85,6 +85,8 @@ def main():
                     save_main_dir = os.path.join(os.getcwd(), slugify(course_name))
                     countstr = str(count)
                     save_as = os.path.join(save_main_dir, countstr+'{}.mp4'.format(slugify(vid_title)))
+                    if vid.get('srt_url') is not None:
+                        srt_save_as = os.path.join(save_main_dir, countstr+'{}.srt'.format(slugify(vid_title)))
                     if not os.path.exists(save_main_dir):
                         os.makedirs(save_main_dir)
                     
@@ -92,9 +94,18 @@ def main():
                         edx.log_message('Already downloaded. Skipping {}'.format(save_as))
                     else:
                         edx.log_message('Downloading video {}'.format(vid_title))
-                        edx.download_video(vid.get('url'), save_as)
+                        edx.download_content(vid.get('url'), save_as)
                         edx.log_message('Downloaded and stored at {}'.format(save_as), 'green')
-            edx.log_message('All done! Videos have been downloaded.')
+
+                    if vid.get('srt_url') is None:
+                        edx.log_message('Found no subtitles for {}'.format(vid_title), 'orange')
+                    elif os.path.exists(srt_save_as):
+                        edx.log_message('Already downloaded. Skipping {}'.format(srt_save_as))
+                    else:
+                        edx.log_message('Downloading subtitles {}'.format(vid_title))
+                        edx.download_content(vid.get('srt_url'), srt_save_as)
+                        edx.log_message('Downloaded and stored at {}'.format(save_as), 'green')
+            edx.log_message('All done! Videos and subtitles have been downloaded.')
             sys.exit(0)
         else:
             edx.log_message('No downloadable videos found for the course!', 'red')
