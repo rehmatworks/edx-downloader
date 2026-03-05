@@ -3,15 +3,19 @@ This is a command-line downloader written using Python. This project is inspired
 
 **Disclaimer**: You should not use this software to abuse EDX website. I have written this software with a positive intention, that is to help learners download EDX course videos altogether quickly and easily. I am not responsible if your EDX account gets banned for abuse. You should use this software on your own risks.
 
+> **Note:** This is the legacy v1 branch. For the current version (v2) with
+> mobile API support, transcripts, and modern CLI, see the
+> [master branch](https://github.com/rehmatworks/edx-downloader).
+
 ## Installation
 ```bash
-pip3 install edx-downloader
+pip3 install "edx-downloader==1.0.3"
 ```
 
-Or clone this repo and install manually:
+Or clone this branch and install manually:
 
 ```bash
-git clone https://github.com/rehmatworks/edx-downloader.git
+git clone -b v1 https://github.com/rehmatworks/edx-downloader.git
 cd edx-downloader
 pip3 install -r requirements.txt
 python3 setup.py install
