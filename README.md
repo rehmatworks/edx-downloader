@@ -1,46 +1,138 @@
-# EDX Downloader (for edx.org)
-This is a command-line downloader written using Python. This project is inspired by [edx-dl](https://github.com/coursera-dl/edx-dl) but it does not rely on `youtube-dl` or any other external library to download the videos. Moreover, at the moment this downloader supports just [https://edx.org](https://edx.org) website only and it doesn't support other similar websites.
+# edx-downloader
 
-**Disclaimer**: You should not use this software to abuse EDX website. I have written this software with a positive intention, that is to help learners download EDX course videos altogether quickly and easily. I am not responsible if your EDX account gets banned for abuse. You should use this software on your own risks.
+A CLI tool to download videos and transcripts from your [edX](https://www.edx.org) courses.
+
+> **v2.0** is a complete rewrite. It uses the official edX mobile API instead of
+> HTML scraping, making it faster, more reliable, and capable of downloading
+> transcripts in any language. See the [v1 branch](https://github.com/rehmatworks/edx-downloader/tree/v1)
+> for the legacy version.
 
 ## Installation
+
 ```bash
-pip3 install edx-downloader
+pip install edx-downloader
 ```
 
-Or clone this repo and install manually:
+Or install from source:
 
 ```bash
 git clone https://github.com/rehmatworks/edx-downloader.git
 cd edx-downloader
-pip3 install -r requirements.txt
-python3 setup.py install
+pip install .
 ```
 
-## Usage
-Once installed, a command `edxdl` becomes available in your terminal. Typing `edxdl` and hitting enter in your terminal should bring up the downloader menu. Provide a course URL and hit enter to get started.
+To also download YouTube-hosted videos (some courses use them):
 
-## Storing Login Credentials
-On a private computer, it is always better if the software doesn't ask you for your EDX login and again. To make the software automatically use your login credentials, create a file called `.edxauth` in your home directory and provide the credentials in two lines. The first line should contain your email address and the second line should contain your password.
+```bash
+pip install "edx-downloader[youtube]"
+```
 
-Moreover, `edx-downloader` will ask you to save your login details if you have not asked it to skip saving the credentials. If it doesn't ask, you can update your credentials in `.edxauth` file any time. On a Unix machine, you can create this file with `touch ~/.edxauth` and edit with your favorite editor. A sample `.edxauth` file has been included in this repo.
+## Quick Start
 
+```bash
+# 1. Log in (you'll be prompted for credentials)
+edx-dl login
 
-## Recommendation
-Although this downloader should work on Python 2.7 too, but it is highly recommended that you should use Python 3.x. to avoid any possible issues.
+# 2. List your enrolled courses
+edx-dl courses
 
-## Bugs & Issues
-I have developed this package quickly and I have uploaded it for the community. Please expect bugs and issues. Bug fixing and improvements are highly appreciated. Send a pull request if you want to improve it or if you have fixed a bug.
+# 3. Download a course
+edx-dl download "course-v1:HarvardX+CS50+X"
+```
 
-Normal users can use the issues section to report bugs and issues for this software. Before opening a new issue, please go through existing ones to be sure that your question has not been asked and answered yet.
+## Commands
 
-## Credits
-- [Python](https://www.python.org/) - The programming language that I have used
-- [beautifulsoup4](https://pypi.org/project/beautifulsoup4/) - For HTML parsing
-- [colorful](https://github.com/timofurrer/colorful) - To show colorful text
-- [fake-useragent](https://pypi.org/project/fake-useragent/) - For a dynamic user-agent
-- [requests](https://github.com/psf/requests) - To make HTTP requests
-- [tqdm](https://github.com/tqdm/tqdm) - To show download progress bar
-- [validators](https://github.com/kvesteri/validators) - To validate URL and email input
+### `edx-dl login`
 
-And thanks to several indirect dependencies that the main dependencies are relying on.
+Authenticate with edX. Your JWT token is saved to `~/.edx-dl/config.json`
+and refreshed automatically when it expires.
+
+```bash
+edx-dl login
+# Email: you@example.com
+# Password: ****
+```
+
+### `edx-dl courses`
+
+List all courses you are enrolled in, showing Course IDs you can use
+with the download command.
+
+```bash
+edx-dl courses
+```
+
+### `edx-dl download`
+
+Download all videos and transcripts for a course.
+
+```bash
+# By course ID
+edx-dl download "course-v1:HarvardX+CS50+X"
+
+# By full URL
+edx-dl download "https://courses.edx.org/courses/course-v1:HarvardX+CS50+X/course/"
+```
+
+#### Options
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `-o`, `--output` | `./downloads` | Output directory |
+| `-q`, `--quality` | `high` | Video quality: `high` (720p) or `medium` (360p) |
+| `-s`, `--subs` | `en` | Transcript languages (comma-separated, or `all`) |
+
+#### Examples
+
+```bash
+# Download with English + Spanish subtitles to a custom folder
+edx-dl download "course-v1:HarvardX+CS50+X" -s "en,es" -o ~/courses
+
+# Download all available transcript languages at 360p
+edx-dl download "course-v1:HarvardX+CS50+X" -q medium -s all
+
+# Resume an interrupted download (already-downloaded files are skipped)
+edx-dl download "course-v1:HarvardX+CS50+X"
+```
+
+## Output Structure
+
+```
+downloads/
+└── CS50s Introduction to Computer Science/
+    ├── 01 - Week 0/
+    │   ├── 01 - Lecture/
+    │   │   ├── 01 - Introduction.mp4
+    │   │   ├── 01 - Introduction [en].srt
+    │   │   └── 01 - Introduction [es].srt
+    │   └── 02 - Problem Set/
+    │       └── ...
+    └── 02 - Week 1/
+        └── ...
+```
+
+## Features
+
+- **Fast**: Single API call retrieves the entire course structure (no HTML scraping)
+- **Reliable**: Uses the stable edX mobile API with JWT authentication
+- **Transcripts**: Download subtitles in any available language
+- **Quality choice**: Pick between 720p and 360p MP4 downloads
+- **Resume support**: Re-run the same command to skip already-downloaded files
+- **YouTube fallback**: Automatically uses `yt-dlp` for YouTube-hosted videos (if installed)
+- **Auto token refresh**: JWT tokens are refreshed automatically, even during long downloads
+- **Smart naming**: Falls back to section names when video blocks have generic titles
+
+## Requirements
+
+- Python 3.10+
+- An [edX](https://www.edx.org) account enrolled in the course(s) you want to download
+
+## Disclaimer
+
+This tool is intended to help learners download course videos for offline study.
+Do not use it to redistribute copyrighted content. You are responsible for
+complying with edX's terms of service.
+
+## License
+
+MIT
